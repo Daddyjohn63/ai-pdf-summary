@@ -4,6 +4,7 @@ import { useUploadThing } from '@/utils/uploadthing';
 import { UploadFormInput } from './upload-form-input';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { generatePdfSummary } from '@/actions/upload-actions';
 
 //zod schema
 const schema = z.object({
@@ -66,11 +67,13 @@ export const UploadForm = () => {
       return;
     }
 
-    toast('✅ PDF uploaded successfully', {
-      description: 'Huzzah!!'
+    toast('✅ Processing your PDF...', {
+      description: 'Hang tight, our AI is reading through your document...'
     });
 
     //parse the pdf using lang chain
+    const summary = await generatePdfSummary(resp);
+    console.log({ summary });
     //summarize the pdf using AI
     //save the summary to the database
     //redirect to the summary page
