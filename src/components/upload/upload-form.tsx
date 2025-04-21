@@ -1,8 +1,11 @@
 'use client';
 
+import { useUploadThing } from '@/utils/uploadthing';
 import { UploadFormInput } from './upload-form-input';
 import { z } from 'zod';
+import { toast } from 'sonner';
 
+//zod schema
 const schema = z.object({
   file: z
     .instanceof(File, { message: 'Invalid file' })
@@ -17,29 +20,56 @@ const schema = z.object({
 });
 
 export const UploadForm = () => {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  //uploadthing
+  const { startUpload, routeConfig } = useUploadThing('pdfUploader', {
+    onClientUploadComplete: () => {
+      console.log('uploaded successfully!');
+    },
+    onUploadError: err => {
+      console.error('error occurred while uploading', err);
+      toast('Error occurred while uploading', {
+        description: err.message
+      });
+    },
+    onUploadBegin: data => {
+      console.log('upload has begun for', data);
+    }
+  });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('submitted');
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const file = formData.get('file') as File;
-    console.log(file);
-
     //validate the fields
     const validatedFields = schema.safeParse({ file });
 
-    console.log(validatedFields);
-
     if (!validatedFields.success) {
-      console.log(
-        validatedFields.error.flatten().fieldErrors.file?.[0] ?? 'Invalid file'
-      );
+      toast(' ❌ Error occurred while uploading', {
+        description:
+          validatedFields.error.flatten().fieldErrors.file?.[0] ??
+          'Invalid file'
+      });
       return;
     }
 
-    console.log(validatedFields.data);
+    toast('📄 Uploading your PDF...', {
+      description: ' This may take a few seconds...'
+    });
 
-    //schema with zod
     //upload the file to uploadthing
+    const resp = await startUpload([file]);
+    if (!resp) {
+      toast.error(' ❌ Error occurred while uploading', {
+        description: 'Please try again'
+      });
+      return;
+    }
+
+    toast('✅ PDF uploaded successfully', {
+      description: 'Huzzah!!'
+    });
+
     //parse the pdf using lang chain
     //summarize the pdf using AI
     //save the summary to the database
