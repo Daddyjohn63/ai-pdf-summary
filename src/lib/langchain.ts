@@ -2,6 +2,8 @@ import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 
 export async function fetchAndExtractPdfText(fileUrl: string) {
   const response = await fetch(fileUrl);
+
+  // console.log('response', response);
   const blob = await response.blob();
 
   const arrayBuffer = await blob.arrayBuffer();

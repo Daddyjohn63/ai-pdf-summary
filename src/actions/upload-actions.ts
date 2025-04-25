@@ -3,6 +3,7 @@
 
 // Import the function that will handle PDF text extraction
 import { fetchAndExtractPdfText } from '@/lib/langchain';
+import { generateSummaryFromOpenAI } from '@/lib/openai';
 
 /**
  * Server action that processes an uploaded PDF file and extracts its text content
@@ -51,11 +52,29 @@ export async function generatePdfSummary(
     const pdfText = await fetchAndExtractPdfText(pdfUrl);
     console.log('Extracted PDF text:', pdfText);
 
+    // Generate a summary from the extracted text using OpenAI
+    let summary;
+    try {
+      summary = await generateSummaryFromOpenAI(pdfText);
+      console.log('Generated summary:', summary);
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      //call gemini code if there is an error.
+    }
+
+    if (!summary) {
+      return {
+        success: false,
+        message: 'Failed to generate summary',
+        data: null
+      };
+    }
+
     // Return success with the extracted text
     return {
       success: true,
-      message: 'PDF text extracted successfully',
-      data: pdfText
+      message: 'PDF summary generated successfully',
+      data: summary
     };
   } catch (err) {
     // Handle any errors during PDF processing
