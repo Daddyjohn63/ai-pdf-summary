@@ -4,7 +4,7 @@
 // Import the function that will handle PDF text extraction
 import { fetchAndExtractPdfText } from '@/lib/langchain';
 import { generateSummaryFromOpenAI } from '@/lib/openai';
-
+import { generateSummaryFromGemini } from '@/lib/geminiai';
 /**
  * Server action that processes an uploaded PDF file and extracts its text content
  * @param uploadResponse - The response from UploadThing containing file upload details
@@ -55,11 +55,43 @@ export async function generatePdfSummary(
     // Generate a summary from the extracted text using OpenAI
     let summary;
     try {
-      summary = await generateSummaryFromOpenAI(pdfText);
+      // summary = await generateSummaryFromOpenAI(pdfText);
+      summary = await generateSummaryFromGemini(pdfText);
       console.log('Generated summary:', summary);
     } catch (error) {
       console.error('Error generating summary:', error);
+      // Handle Gemini service overload
+      if (
+        error instanceof Error &&
+        error.message.includes('503 Service Unavailable')
+      ) {
+        return {
+          success: false,
+          message:
+            'The AI service is currently overloaded. Please try again in a few minutes.',
+          data: null
+        };
+      }
       //call gemini code if there is an error.
+      if (
+        error instanceof Error &&
+        error.message.includes('RATE_LIMIT_EXCEEDED')
+      ) {
+        try {
+          //call Gemini API
+          const geminiSummary = await generateSummaryFromGemini(pdfText);
+          console.log('Generated summary from Gemini:', geminiSummary);
+          summary = geminiSummary;
+        } catch (geminiError) {
+          console.error(
+            'Gemini API failed after OPenAI quota was exceeded:',
+            geminiError
+          );
+        }
+        throw new Error(
+          'Failed to generate summary with available AI providers'
+        );
+      }
     }
 
     if (!summary) {
