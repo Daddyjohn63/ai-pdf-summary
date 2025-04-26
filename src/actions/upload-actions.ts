@@ -138,7 +138,9 @@ export async function generatePdfSummary(
       message: 'PDF summary generated successfully',
       data: {
         title: formattedFileName,
-        summary: summary
+        summary: summary,
+        fileUrl: pdfUrl,
+        fileName: fileName
       }
     };
   } catch (err) {
@@ -190,9 +192,6 @@ export async function storePdfSummaryAction({
   title,
   fileName
 }: PdfSummaryType) {
-  //user is logged in
-  //savePdfSummary()
-  let savedSummary: any;
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -202,19 +201,30 @@ export async function storePdfSummaryAction({
         data: null
       };
     }
-    savedSummary = await savePdfSummary({
+
+    const savedSummary = await savePdfSummary({
       userId,
       fileUrl,
       summary,
       title,
       fileName
     });
+
     if (!savedSummary) {
       return {
         success: false,
-        message: 'Failed to save PDF summary, please try again...'
+        message: 'Failed to save PDF summary, please try again...',
+        data: null
       };
     }
+
+    return {
+      success: true,
+      message: 'PDF summary saved successfully',
+      data: {
+        id: savedSummary.id
+      }
+    };
   } catch (error) {
     return {
       success: false,
@@ -223,11 +233,4 @@ export async function storePdfSummaryAction({
       data: null
     };
   }
-  return {
-    success: true,
-    message: 'PDF summary saved successfully',
-    data: {
-      id: savedSummary.id
-    }
-  };
 }
