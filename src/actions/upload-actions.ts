@@ -55,42 +55,60 @@ export async function generatePdfSummary(
     // Generate a summary from the extracted text using OpenAI
     let summary;
     try {
-      // summary = await generateSummaryFromOpenAI(pdfText);
-      summary = await generateSummaryFromGemini(pdfText);
+      // Try OpenAI first
+      summary = await generateSummaryFromOpenAI(pdfText);
       console.log('Generated summary:', summary);
     } catch (error) {
-      console.error('Error generating summary:', error);
-      // Handle Gemini service overload
-      if (
-        error instanceof Error &&
-        error.message.includes('503 Service Unavailable')
-      ) {
-        return {
-          success: false,
-          message:
-            'The AI service is currently overloaded. Please try again in a few minutes.',
-          data: null
-        };
-      }
-      //call gemini code if there is an error.
-      if (
-        error instanceof Error &&
-        error.message.includes('RATE_LIMIT_EXCEEDED')
-      ) {
-        try {
-          //call Gemini API
-          const geminiSummary = await generateSummaryFromGemini(pdfText);
-          console.log('Generated summary from Gemini:', geminiSummary);
-          summary = geminiSummary;
-        } catch (geminiError) {
-          console.error(
-            'Gemini API failed after OPenAI quota was exceeded:',
-            geminiError
-          );
+      console.error('Error generating summary with OpenAI:', error);
+
+      // Handle OpenAI errors
+      if (error instanceof Error) {
+        if (error.message.includes('503 Service Unavailable')) {
+          return {
+            success: false,
+            message:
+              'The AI service is currently overloaded. Please try again in a few minutes.',
+            data: null
+          };
         }
-        throw new Error(
-          'Failed to generate summary with available AI providers'
-        );
+        if (
+          error.message.includes('429') ||
+          error.message.includes('RATE_LIMIT_EXCEEDED')
+        ) {
+          // Only try Gemini if OpenAI rate limit is exceeded
+          try {
+            console.log('OpenAI rate limit exceeded, trying Gemini...');
+            summary = await generateSummaryFromGemini(pdfText);
+            console.log('Generated summary from Gemini:', summary);
+          } catch (geminiError) {
+            console.error('Error generating summary with Gemini:', geminiError);
+            if (geminiError instanceof Error) {
+              if (
+                geminiError.message.includes('503 Service Unavailable') ||
+                geminiError.message.includes('429') ||
+                geminiError.message.includes('RATE_LIMIT_EXCEEDED')
+              ) {
+                return {
+                  success: false,
+                  message:
+                    'All AI services are currently unavailable. Please try again in a few minutes.',
+                  data: null
+                };
+              }
+            }
+            return {
+              success: false,
+              message: 'Failed to generate summary with available AI providers',
+              data: null
+            };
+          }
+        } else {
+          return {
+            success: false,
+            message: 'Failed to generate summary with OpenAI',
+            data: null
+          };
+        }
       }
     }
 
