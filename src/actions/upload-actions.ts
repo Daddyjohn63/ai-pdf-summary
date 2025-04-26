@@ -5,11 +5,23 @@
 import { fetchAndExtractPdfText } from '@/lib/langchain';
 import { generateSummaryFromOpenAI } from '@/lib/openai';
 import { generateSummaryFromGemini } from '@/lib/geminiai';
+import { getDbConnection } from '@/db/db';
+import { auth } from '@clerk/nextjs/server';
+import { formatFileNameAsTitle } from '@/utils/format-utils';
 /**
  * Server action that processes an uploaded PDF file and extracts its text content
  * @param uploadResponse - The response from UploadThing containing file upload details
  * @returns Promise containing success status, message, and extracted text data
  */
+
+interface PdfSummaryType {
+  userId?: string;
+  fileUrl: string;
+  summary: string;
+  title: string;
+  fileName: string;
+}
+
 export async function generatePdfSummary(
   // Define the expected structure of the upload response
   uploadResponse: {
@@ -50,7 +62,7 @@ export async function generatePdfSummary(
   try {
     // Use LangChain to fetch the PDF and extract its text content
     const pdfText = await fetchAndExtractPdfText(pdfUrl);
-    // console.log('Extracted PDF text:', pdfText);
+    console.log('Extracted PDF text:', pdfText);
 
     // Generate a summary from the extracted text using OpenAI
     let summary;
@@ -119,12 +131,15 @@ export async function generatePdfSummary(
         data: null
       };
     }
-
+    const formattedFileName = formatFileNameAsTitle(fileName);
     // Return success with the extracted text
     return {
       success: true,
       message: 'PDF summary generated successfully',
-      data: summary
+      data: {
+        title: formattedFileName,
+        summary: summary
+      }
     };
   } catch (err) {
     // Handle any errors during PDF processing
@@ -135,4 +150,84 @@ export async function generatePdfSummary(
       data: null
     };
   }
+}
+
+async function savePdfSummary({
+  userId,
+  fileUrl,
+  summary,
+  title,
+  fileName
+}: PdfSummaryType) {
+  //sql to insert pdf summary into database
+
+  try {
+    const db = await getDbConnection();
+    const result = await db.query(
+      `
+      INSERT INTO pdf_summaries (
+        user_id,
+        original_file_url,
+        summary_text,
+        title,
+        file_name
+      ) VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, summary_text
+    `,
+      [userId, fileUrl, summary, title, fileName]
+    );
+    const savedSummary = result.rows[0];
+    return savedSummary;
+  } catch (error) {
+    console.error('Error saving PDF summary', error);
+    throw error;
+  }
+}
+
+export async function storePdfSummaryAction({
+  fileUrl,
+  summary,
+  title,
+  fileName
+}: PdfSummaryType) {
+  //user is logged in
+  //savePdfSummary()
+  let savedSummary: any;
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return {
+        success: false,
+        message: 'User not authenticated',
+        data: null
+      };
+    }
+    savedSummary = await savePdfSummary({
+      userId,
+      fileUrl,
+      summary,
+      title,
+      fileName
+    });
+    if (!savedSummary) {
+      return {
+        success: false,
+        message: 'Failed to save PDF summary, please try again...'
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : 'Error saving PDF summary',
+      data: null
+    };
+  }
+  return {
+    success: true,
+    message: 'PDF summary saved successfully',
+    data: {
+      id: savedSummary.id
+    }
+  };
 }
