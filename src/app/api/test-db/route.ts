@@ -1,7 +1,7 @@
 //tests if connection string is working. In terminal run: curl http://localhost:3000/api/test-db
 
 import { NextResponse } from 'next/server';
-import { getDbConnection } from '@/lib/db';
+import { getDbConnection } from '@/db/db';
 
 export async function GET() {
   try {
