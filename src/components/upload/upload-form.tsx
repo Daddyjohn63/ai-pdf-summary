@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import { useRef } from 'react';
 import LoadingSkeleton from './loading-skeleton';
+import { useRouter } from 'next/navigation';
 
 //zod schema
 const schema = z.object({
@@ -29,6 +30,7 @@ const schema = z.object({
 export const UploadForm = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   //uploadthing
   const { startUpload, routeConfig } = useUploadThing('pdfUploader', {
@@ -108,6 +110,7 @@ export const UploadForm = () => {
             description: 'Your PDF has been successfully summarised and saved!'
           });
           formRef.current?.reset();
+          router.push(`/summaries/${storeResult.data.id}`);
         }
       }
     } catch (error) {

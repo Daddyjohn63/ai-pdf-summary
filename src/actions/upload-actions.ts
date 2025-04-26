@@ -8,6 +8,7 @@ import { generateSummaryFromGemini } from '@/lib/geminiai';
 import { getDbConnection } from '@/db/db';
 import { auth } from '@clerk/nextjs/server';
 import { formatFileNameAsTitle } from '@/utils/format-utils';
+import { revalidatePath } from 'next/cache';
 /**
  * Server action that processes an uploaded PDF file and extracts its text content
  * @param uploadResponse - The response from UploadThing containing file upload details
@@ -216,6 +217,12 @@ export async function storePdfSummaryAction({
         message: 'Failed to save PDF summary, please try again...',
         data: null
       };
+    }
+
+    // Only revalidate if we have a confirmed successful save
+    if (savedSummary.id) {
+      revalidatePath(`/summaries/${savedSummary.id}`);
+      revalidatePath('/dashboard');
     }
 
     return {
