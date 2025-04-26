@@ -50,7 +50,7 @@ export async function generatePdfSummary(
   try {
     // Use LangChain to fetch the PDF and extract its text content
     const pdfText = await fetchAndExtractPdfText(pdfUrl);
-    console.log('Extracted PDF text:', pdfText);
+    // console.log('Extracted PDF text:', pdfText);
 
     // Generate a summary from the extracted text using OpenAI
     let summary;
@@ -79,7 +79,7 @@ export async function generatePdfSummary(
           try {
             console.log('OpenAI rate limit exceeded, trying Gemini...');
             summary = await generateSummaryFromGemini(pdfText);
-            console.log('Generated summary from Gemini:', summary);
+            //  console.log('Generated summary from Gemini:', summary);
           } catch (geminiError) {
             console.error('Error generating summary with Gemini:', geminiError);
             if (geminiError instanceof Error) {
