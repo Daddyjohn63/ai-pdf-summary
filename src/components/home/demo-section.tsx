@@ -68,7 +68,7 @@ export default function DemoSection() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="font-bold text-3xl max-w-2xl mx-auto px-4 sm:px-6"
             >
-              Watch how Sommaire transforms{' '}
+              Watch how Summit transforms{' '}
               <span className="bg-linear-to-r from-rose-500 to-rose-700 bg-clip-text text-transparent">
                 this Next.js course PDF
               </span>{' '}

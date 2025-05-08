@@ -1,6 +1,6 @@
 import {
   handleCheckoutSessionCompleted,
-  handleSubscriptionDeleted,
+  handleSubscriptionDeleted
 } from '@/lib/payments';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
@@ -24,7 +24,7 @@ export const POST = async (req: NextRequest) => {
         console.log('Checkout session completed');
         const sessionId = event.data.object.id;
         const session = await stripe.checkout.sessions.retrieve(sessionId, {
-          expand: ['line_items'],
+          expand: ['line_items']
         });
 
         await handleCheckoutSessionCompleted({ session, stripe });
@@ -37,7 +37,7 @@ export const POST = async (req: NextRequest) => {
 
         await handleSubscriptionDeleted({ subscriptionId, stripe });
 
-        console.log(subscription);
+        //console.log(subscription);
 
         break;
       default:
@@ -52,6 +52,6 @@ export const POST = async (req: NextRequest) => {
   }
 
   return NextResponse.json({
-    status: 'success',
+    status: 'success'
   });
 };

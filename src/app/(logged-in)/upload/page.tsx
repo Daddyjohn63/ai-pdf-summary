@@ -8,6 +8,7 @@ import { MotionDiv } from '@/components/common/motion-wrapper';
 import { containerVariants } from '@/utils/constants';
 import { UploadForm } from '@/components/upload/upload-form';
 import { UploadHeader } from '@/components/upload/upload-header';
+import { hasReachedUploadLimit } from '@/lib/user';
 
 export const maxDuration = 60;
 
@@ -20,14 +21,14 @@ export default async function Page() {
 
   const userId = user.id;
 
-  // const { hasReachedLimit } = await hasReachedUploadLimit({
-  //   userId,
-  //   email: user.emailAddresses?.[0]?.emailAddress
-  // });
+  const { hasReachedLimit } = await hasReachedUploadLimit({
+    userId,
+    email: user.emailAddresses?.[0]?.emailAddress
+  });
 
-  // if (hasReachedLimit) {
-  //   redirect('/dashboard');
-  // }
+  if (hasReachedLimit) {
+    redirect('/dashboard');
+  }
 
   return (
     <section className="min-h-screen">

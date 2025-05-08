@@ -1,5 +1,7 @@
 'use client';
 
+//the purpose of tis component is so we can use motion in our server pages.
+
 import { motion } from 'motion/react';
 
 export const MotionDiv = motion.div;

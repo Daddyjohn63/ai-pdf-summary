@@ -58,9 +58,9 @@ const PricingCard = ({
         </MotionDiv>
 
         <MotionDiv variants={listVariant} className="flex gap-2">
-          <p className="text-5xl tracking-tight font-extrabold">${price}</p>
+          <p className="text-5xl tracking-tight font-extrabold">£{price}</p>
           <div className="flex flex-col justify-end mb-[4px]">
-            <p className="text-xs uppercase font-semibold">USD</p>
+            <p className="text-xs uppercase font-semibold">GBP</p>
             <p className="text-xs">/month</p>
           </div>
         </MotionDiv>
